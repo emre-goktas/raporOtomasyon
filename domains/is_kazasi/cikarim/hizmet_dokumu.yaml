@@ -1,0 +1,33 @@
+# S.G.K Uzun Vade Hizmet Dökümü (kurum sistemi -> *_HizmetDokumuUV.pdf)
+# Raporun 4.3 (prime esas kazançlar) tablosunu ve Faz 4'ün çalışma süresi
+# kontrollerini besler. Sabit genişlikli kurum tablosu: kolon çapaları
+# ölçülüp yazıldı, her sayfada başlık satırıyla doğrulanıyor.
+belge_turu: hizmet_dokumu
+motor: tablo
+
+tanima:
+  metin_icerir:
+    - "Hizmet Dökümü"
+
+tablo:
+  baslik_capalari: ["Dönem", "Ünite", "Gösterge"]
+  bitis_capalari:  ["Not:", "ALINABİLMEKTEDİR"]
+  satir_capasi: donem
+  en_az_dolu_kolon: 3
+  kolonlar:
+    - { ad: sgrt_kolu,      x: 32,  baslik: "Kolu" }
+    - { ad: sgrt_statu,     x: 52,  baslik: "Statü" }
+    - { ad: sicil_no,       x: 96,  baslik: "Sicil" }
+    - { ad: ad_soyad,       x: 148, baslik: "Soyadı" }
+    - { ad: meslek_kodu,    x: 223, baslik: "Meslek" }
+    - { ad: isyeri_no,      x: 248, baslik: "Sandık" }
+    - { ad: unite,          x: 283, baslik: "Ünite" }
+    - { ad: donem,          x: 311, baslik: "Dönem" }
+    - { ad: belge_turu,     x: 340, baslik: "Türü" }
+    - { ad: belge_kodu,     x: 361, baslik: "Bsmk" }
+    - { ad: giris_tarihi,   x: 381, baslik: "Giriş" }
+    - { ad: gun,            x: 411, baslik: "Gün" }
+    - { ad: pek,            x: 431, baslik: "Gösterge" }
+    - { ad: cikis_tarihi,   x: 486, baslik: "Tarihi" }
+    - { ad: eksik_gun_nedeni, x: 522, baslik: "Nedeni" }
+    - { ad: isten_cikis_kodu, x: 544, baslik: "Kodu" }

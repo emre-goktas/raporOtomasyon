@@ -1,0 +1,59 @@
+# Denetim gerekçesi — SGK İl/Merkez Müdürlüğünün Rehberlik ve Teftiş
+# Başkanlığına yazdığı görevlendirme talebi. Yeni sistemde metin katmanlı PDF
+# olarak geliyor (eskiden UDF'ti; UDF kapsam dışı).
+#
+# Raporun GENEL BİLGİLER tablosunu, "2. İncelemenin Konusu" bölümünü ve
+# ek listesindeki 2 numaralı satırı besler. Kaza/ölüm tarihi buradan geliyor —
+# 3a belgelerinin hiçbirinde yok.
+belge_turu: denetim_gerekcesi
+motor: satir
+
+tanima:
+  metin_icerir:
+    - "REHBERLİK VE TEFTİŞ"
+    - "gerekli incelemenin yapılarak"
+
+alanlar:
+  sayi:      { etiket: "Sayı", tip: metin, desen: "^(\\S+)", zorunlu: true }
+  tarih:     { etiket: "Sayı", tip: tarih, zorunlu: true }
+  konu:      { etiket: "Konu", tip: metin }
+
+  # Antet iki satır: "<İl> Sosyal Güvenlik İl Müdürlüğü" + "<İlçe> ... Merkez Müdürlüğü"
+  mudurluk:  { etiket: "@SOSYAL GÜVENLİK KURUMU", tip: metin, desen: "^(.*?İl Müdürlüğü)" }
+  merkez:    { etiket: "@SOSYAL GÜVENLİK KURUMU", tip: metin, kosullu: true,
+               desen: "İl Müdürlüğü\\s+(.+)$" }
+
+  # Gövde cümlesi: "<TC> T.C. Kimlik Numaralı <Ad Soyad>' ün iş kazası ihbar..."
+  # Gövdede önce 13 haneli sigorta sicil, sonra TC geliyor — çapayı
+  # "T.C. Kimlik" ifadesine bağla, yoksa sigorta sicilin ilk 11 hanesi gelir.
+  tc:            { etiket: "@REHBERLİK", tip: tc, dogrula: tc, zorunlu: true,
+                   desen: "(\\d{11})\\s*T\\.?C" }
+  # "…T.C. Kimlik Numaralı Ahmet YILMAZ'ın…" — bazı müdürlükler "numaralı"yı
+  # küçük harfle yazıyor, kesme işareti ' ya da ’ olabiliyor.
+  sigortali_ad:  { etiket: "@REHBERLİK", tip: metin, kosullu: true,
+                   desen: "(?i)kimlik\\s*numaral[ıi]\\s+(.+?)\\s*['’]" }
+
+  # Her müdürlük aynı alanı başka yazıyor; yedi örnekte görülen varyantlar:
+  #   sicil   : "İşyeri Sicil Numarası" · "1- İşyeri Sicil Numarası"
+  #   ünvan   : "Adı - Soyadı Veya Ticaret Unvanı" · "... Unvan" · "... Unv."
+  #             · "Ticaret Unvanı" · "2-İşverenin Adı Soyadı, Unvanı"
+  #   tarih   : "Kaza Tarihi" · "Tespit Tarihi" · "Meslek hastalığı Tespit
+  #             Tarihi" · "Kaza Tarihi / Meslek hastalığı Tespit Tarihi"
+  #             · "5- Olay Tarihi"
+  # Tescilsiz işyerinde bu alana sicil yerine "Tescilsiz iş yeri." yazılıyor —
+  # ayrı bir rapor akışı gerektirdiği için değeri kaybetmeden taşınıyor.
+  isyeri_sicil:  { anahtar_kelimeler: ["sicil"], tip: metin,
+                   desen: "^([0-9][0-9\\-. ]*[0-9]|[^0-9]*[Tt]escilsiz[^.]*)" }
+  isveren_unvan: { anahtar_kelimeler: ["unv"], tip: metin }
+  isyeri_adres:  { anahtar_kelimeler: ["isyerinin adres"], tip: metin }
+  isveren_adres: { anahtar_kelimeler: ["isverenin", "adres"], tip: metin }
+
+  kaza_tarihi:   { anahtar_kelimeler: ["tarih"], tip: tarih, zorunlu: true }
+  olum_tarihi:   { anahtar_kelimeler: ["tarih"], tip: tarih, kosullu: true,
+                   desen: "(?i)ölüm tarihi\\s*:\\s*([0-9./-]+)" }
+  olay_turu:     { anahtar_kelimeler: ["diger"], tip: metin }
+
+  # "Ek: Ekler taranarak eklenmiştir. (34 Sayfa)" — muhteviyat dosyasının
+  # sayfa adedi; indirilen PDF ile karşılaştırılıp eksik ek yakalanır.
+  ek_aciklama:    { etiket: "Ek", tip: metin }
+  ek_sayfa_adedi: { etiket: "Ek", tip: tamsayi, desen: "(?i)(\\d+)\\s*sayfa" }

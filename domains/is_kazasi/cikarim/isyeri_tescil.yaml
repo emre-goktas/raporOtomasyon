@@ -1,0 +1,43 @@
+# İşyeri tescil bilgi çıktısı (kurum sistemi -> tescilBilgi_*.pdf)
+# Raporun GENEL BİLGİLER tablosu ile 4.1 (tescil işlemleri) bölümünü besler.
+belge_turu: isyeri_tescil
+motor: etiketli
+
+tanima:
+  gerekli_anahtarlar:
+    - "İş Yeri Sicil No"
+    - "İşyeri Ünvanı"
+    - "İş Kolu Kodu"
+
+alanlar:
+  sicil_no:       { etiket: "İş Yeri Sicil No", tip: metin, zorunlu: true }
+  unvan:          { etiket: "İşyeri Ünvanı", tip: metin, zorunlu: true, kirpma_esigi: 60 }
+  vergi_no:       { etiket: "Vergi No", tip: rakam }
+  is_kolu_kodu:   { etiket: "İş Kolu Kodu", tip: metin }
+  tehlike_sinifi: { etiket: "Tehlike Sınıfı", tip: metin }
+  mahiyet_kodu:   { etiket: "Mahiyet Kodu", tip: metin }
+  prim_nispeti:   { etiket: "Prim Nispeti", tip: ondalik }
+  isin_mahiyeti:  { etiket: "İşin Mahiyeti", tip: metin }
+  sektor:         { etiket: "Faaliyette Bulunduğu Sektör", tip: metin }
+  sgm:            { etiket: "Sgm Kodu-Ad", tip: metin }
+
+  # Adres — rapordaki GENEL BİLGİLER tablosunda tek satırda birleştirilir
+  mahalle:        { etiket: "Mahalle-Semt", tip: metin }
+  cadde:          { etiket: "Cadde-Sokak", tip: metin }
+  dis_kapi:       { etiket: "Dış Kapı", tip: metin }
+  ic_kapi:        { etiket: "İç Kapı", tip: metin }
+  ilce:           { etiket: "İlçe", tip: metin }
+  il:             { etiket: "İl", tip: metin }
+  posta_kodu:     { etiket: "Posta Kodu", tip: metin }
+  tel:            { etiket: "Tel", tip: rakam }
+  eposta:         { etiket: "E-Posta", tip: eposta }
+
+  # Tescil zaman çizgisi — 4.1'in olgu tespiti ve Faz 4 kural motoru için
+  kanun_kapsamina_alinis: { etiket: "Kan.Kap. Alınış Tar", tip: tarih }
+  kanun_kapsamindan_cikis: { etiket: "Kan.Kap. Çıkış Tar", tip: tarih }
+  muracaat_tarihi:        { etiket: "Müracat Tarihi-Bildirim Tarihi", tip: tarih }
+  sisteme_isleme_tarihi:  { etiket: "Sisteme İşleme Tarihi", tip: tarih }
+  tescilin_turu:          { etiket: "Tescilin Türü", tip: metin }
+  calisan_sayisi_baslangic: { etiket: "Çal.Başl.Sig.Sayısı", tip: tamsayi }
+  vergi_dairesi:          { etiket: "Vergi Dairesi No-Ad", tip: metin }
+  ticaret_sicil_no:       { etiket: "Tic.Sic./Vak./Der.N", tip: metin }

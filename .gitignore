@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+cases/
+logs/
+*.docx
+!domains/**/rapor_sablonu.docx
+
+# gerçek kişisel veri (TC, ad-soyad) — commit edilmez
+ornek_veri/
+
+.env

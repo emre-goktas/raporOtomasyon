@@ -1,0 +1,52 @@
+# Sigortalı İşe Giriş Bildirgesi (kurum sistemi -> *_ig.pdf)
+# Kritik alan: ise_baslama_tarihi — 4.2 (sigortalılık nitelikleri) ve
+# Faz 4 kural motorunun "bildirge zamanında mı" kontrolü buradan beslenir.
+#
+# Çapalar formun kendi etiket metinleridir; mutlak koordinat yalnız hücre
+# ızgaralı iki alanda (TC, işyeri sicil) var ve ikisi de `dogrula` ile
+# eşleştirildi — kalibrasyon kayarsa sessiz değil gürültülü hata verir.
+belge_turu: ise_giris_bildirgesi
+motor: form
+
+tanima:
+  metin_icerir:
+    - "SİGORTALI İŞE GİRİŞ BİLDİRGESİ"
+
+alanlar:
+  ise_baslama_tarihi:
+    capa: "Sigortalının işe başladığı tarih"
+    yon: sag
+    tip: tarih
+    zorunlu: true
+
+  ad:           { capa: "1 Adı", yon: sag, tip: metin, zorunlu: true }
+  soyad:        { capa: "2 Soyadı", yon: sag, tip: metin, zorunlu: true }
+  baba_adi:     { capa: "Baba Adı", yon: sag, tip: metin }
+  ana_adi:      { capa: "Ana Adı", yon: sag, tip: metin }
+  dogum_yeri:   { capa: "Doğum Yeri", yon: sag, tip: metin }
+  dogum_tarihi: { capa: "Doğum Tarihi", yon: sag, tip: tarih }
+  meslek:       { capa: "Meslek Adı ve Kodu", yon: sag, tip: metin }
+  sigortali_sicil_no: { capa: "13 Varsa;", yon: sag, tip: rakam }
+
+  isveren_unvan:
+    capa: "İşverenin/İşyerinin/İlgili Kuruluşun Adı-Soyadı/Ünv."
+    yon: alt
+    tip: metin
+  isyeri_adres:
+    capa: "İşyerinin (Kurumun) Adresi"
+    yon: alt
+    tip: metin
+
+  # --- hücre ızgaralı alanlar: çapraz doğrulama için (kural 6) ---
+  tc:
+    capa: "GÜVENLİK NUMARASI)"
+    yon: alt
+    x_araligi: [40, 320]
+    tip: tc
+    dogrula: tc
+    zorunlu: true
+  isyeri_sicil_hucreler:
+    capa: "22 SGK İŞYERİ SİCİL NUMARASI"
+    yon: alt
+    x_araligi: [200, 560]
+    tip: metin

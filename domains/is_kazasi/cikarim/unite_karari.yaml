@@ -1,0 +1,51 @@
+# Ünite İş Kazası Kararı — SGK merkez müdürlüğü komisyonunun kararı.
+# Kaza tarihi/saati, olayın oluş şekli ve komisyonun elindeki belge listesi
+# burada. "Mevcut ( X ) / Mevcut değil ( )" kutucukları Faz 4'ün eksik belge
+# kuralının doğrudan girdisi.
+belge_turu: unite_karari
+motor: satir
+
+tanima:
+  metin_icerir:
+    - "ÜNİTE KARARI"
+    - "Karar Tarihi"
+
+alanlar:
+  sayi:         { etiket: "Sayı", tip: metin, desen: "^(\\S+)" }
+  karar_no:     { etiket: "Karar No", tip: tamsayi, zorunlu: true }
+  karar_tarihi: { etiket: "Karar Tarihi", tip: tarih, zorunlu: true }
+  kaza_tarihi:  { etiket: "İş Kazası Tarihi", tip: tarih, zorunlu: true }
+  kaza_saati:   { etiket: "İş Kazası Tarihi", tip: metin, desen: "(\\d{1,2}:\\d{2})" }
+  karar_ekleri: { etiket: "Karar ekleri", tip: metin }
+
+  isveren_unvan: { etiket: "Adı Soyadı veya Ticaret Ünvanı", tip: metin }
+  isyeri_sicil:  { etiket: "İşyeri Sicil No", tip: metin }
+  isin_konusu:   { etiket: "İşyerinde Yapılan İşin Konusu", tip: metin }
+  sanayi_kolu:   { etiket: "İş yerinin sanayi kolu", tip: metin }
+
+  kazali_ad_soyad: { etiket: "Adı Soyadı", tip: metin, zorunlu: true }
+  dogum_yeri:      { etiket: "Doğum Yeri Tarihi", tip: metin, desen: "^(.*?)\\s*[–-]" }
+  dogum_tarihi:    { etiket: "Doğum Yeri Tarihi", tip: tarih }
+  tc:              { etiket: "T.C. Kimlik No", tip: tc, dogrula: tc, zorunlu: true }
+  sigorta_sicil_no: { etiket: "Sigorta Sicil No", tip: rakam }
+  meslek:          { etiket: "yaptığı iş", tip: metin }
+  meslek_kodu:     { etiket: "Meslek Kodu", tip: metin }
+  olus_sekli:      { etiket: "Kazanın oluş şekli", tip: metin, zorunlu: true }
+  yaralanan_uzuv:  { etiket: "Kazada yaralanan organ", tip: metin }
+  hastalik:        { etiket: "Doğuştan veya sonradan", tip: metin }
+  gecici_is_goremezlik: { etiket: "Geçici iş göremezlik", tip: metin }
+  onceki_kaza:     { etiket: "Başka bir iş kazası", tip: metin }
+
+  # C-KARAR DAYANAĞI ve D-HASTANE bölümlerindeki var/yok kutucukları
+  belge_kaza_bildirimi:     { etiket: "1-İş Kazası Bildirimi", tip: mevcut }
+  belge_bildirim_suresinde: { etiket: "2-İşveren", tip: mevcut }
+  belge_kazali_ifade:       { etiket: "3-Kazalı ifade", tip: mevcut }
+  belge_kolluk_ifade:       { etiket: "4-Jandarma", tip: mevcut }
+  belge_sahit:              { etiket: "5-Şahit", tip: mevcut }
+  belge_adli_rapor:         { etiket: "Adli Rapor", tip: mevcut }
+  belge_epikriz:            { etiket: "epikriz", tip: mevcut }
+  belge_calisir_raporu:     { etiket: "çalışır/çalışamaz", tip: mevcut }
+  belge_son_durum_raporu:   { etiket: "son durumunu", tip: mevcut }
+  belge_periyodik_muayene:  { etiket: "periodik muayene", tip: mevcut }
+
+  sonuc_kanaat: { etiket: "@E-SONUÇ", tip: metin, zorunlu: true }

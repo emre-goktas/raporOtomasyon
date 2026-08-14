@@ -1,0 +1,58 @@
+# Sigortalı İşten Ayrılış Bildirgesi (kurum sistemi -> *_ia.pdf)
+# Kritik alanlar: ayrilis_tarihi + ayrilis_nedeni — kaza tarihiyle tutarlılık
+# kontrolü (Faz 4) ve 4.2'nin olgu tespiti buradan beslenir.
+belge_turu: isten_ayrilis_bildirgesi
+motor: form
+
+tanima:
+  metin_icerir:
+    - "SİGORTALI İŞTEN AYRILIŞ BİLDİRGESİ"
+
+alanlar:
+  ayrilis_tarihi:
+    capa: "Sigortalının İşten Ayrılış Tarihi"
+    yon: sag
+    tip: tarih
+    zorunlu: true
+  ayrilis_nedeni_kodu:
+    capa: "Sigortalının İşten Ayrılış Nedeni"
+    yon: sag
+    tip: metin
+    zorunlu: true
+
+  ad:           { capa: "1 Adı", yon: sag, tip: metin, zorunlu: true }
+  soyad:        { capa: "2 Soyadı", yon: sag, tip: metin, zorunlu: true }
+  baba_adi:     { capa: "Baba Adı", yon: sag, tip: metin }
+  ana_adi:      { capa: "Ana Adı", yon: sag, tip: metin }
+  dogum_yeri:   { capa: "Doğum Yeri", yon: sag, tip: metin }
+  dogum_tarihi: { capa: "Doğum Tarihi", yon: sag, tip: tarih }
+  meslek:       { capa: "Meslek Adı ve Kodu", yon: sag, tip: metin }
+  # "Sicil Numarası" formda iki yerde geçiyor (sigortalının ve işyerinin);
+  # doğru olanı sırasından değil 13 haneli biçiminden ayırıyoruz.
+  sigortali_sicil_no:
+    capa: "Sicil Numarası"
+    yon: sag
+    deger_deseni: "\\d{13}"
+    tip: rakam
+
+  isveren_unvan:
+    capa: "İşverenin/İşyerinin/İlgili Kuruluşun Adı-Soyadı/Ünv."
+    yon: alt
+    tip: metin
+  isyeri_adres:
+    capa: "İşyerinin (Kurumun) Adresi"
+    yon: alt
+    tip: metin
+
+  tc:
+    capa: "(T.C.KİMLİK NUMARASI)"
+    yon: alt
+    x_araligi: [170, 440]
+    tip: tc
+    dogrula: tc
+    zorunlu: true
+  isyeri_sicil_hucreler:
+    capa: "20 SGK İŞYERİ SİCİL NUMARASI"
+    yon: alt
+    x_araligi: [200, 560]
+    tip: metin
