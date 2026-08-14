@@ -1,0 +1,126 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  RAPOR BÖLÜMÜ TANIMI — örnek dosya, kalıbı buradan kopyala
+#
+#  Rapor sabit bir metin değil, KOŞULLU BLOKLARIN listesidir.
+#  Her blok kendi koşulu tuttuğunda basılır, tutmadığında hiç görünmez.
+#  Böylece belge eksik olduğunda ortada yarım cümle kalmaz.
+#
+#  ALTIN KURAL: her "eğer" için iki blok yaz — biri olduğunda, biri olmadığında.
+# ══════════════════════════════════════════════════════════════════════════
+
+bolum: "4.1"
+baslik: "İşyerinin Tescil İşlemleri ve İşverenlik Niteliğinin Değerlendirilmesi"
+
+bloklar:
+
+  # ─── BLOK 1 ─────────────────────────────────────────────────────────────
+  # `kosul: her zaman` → bu blok her raporda basılır.
+  # Mevzuat alıntıları böyle. Metni birebir yapıştır, tırnaklara dokunma.
+  - ad: mevzuat
+    kosul: her zaman
+    metin: |
+      5510 sayılı Kanunun 12. maddesinde; “4. maddenin 1. fıkrasının (a) ve (c)
+      bentlerine göre sigortalı sayılan kişileri çalıştıran gerçek veya tüzel
+      kişiler ile tüzel kişiliği olmayan kurum ve kuruluşlar işverendir.”
+      denilmiştir.
+
+  # ─── BLOK 2 ─────────────────────────────────────────────────────────────
+  # {{alan}}  → case.json'dan gelen veri (aşağıdaki listeye bak)
+  # {{ek:...}} → JETEK ek numarası; araya belge girse de numara kendiliğinden kayar
+  - ad: tescilli-isyeri
+    kosul: işyeri tescilli
+    metin: |
+      Kurum kayıtlarından yapılan sorgulamalarda; {{isyeri_sicil_no}} sicil numaralı
+      {{isyeri_unvan}} unvanlı işyerinin, işkolu kodunun {{is_kolu_kodu}} olduğu,
+      “{{tehlike_sinifi}}” sınıfta yer aldığı ve {{kanun_kapsamina_alinis}} tarihinde
+      kanun kapsamına alındığı görülmüştür. {{ek:isyeri_tescil}}
+
+  # ─── BLOK 3 ─────────────────────────────────────────────────────────────
+  # BLOK 2'nin "olmadığında" hâli. İkisi birbirini dışlıyor,
+  # her vakada tam olarak biri basılır.
+  - ad: tescilsiz-isyeri
+    kosul: işyeri tescilsiz
+    metin: |
+      İncelemeye konu işyerinin Kurumumuz kayıtlarında tescilinin bulunmadığı,
+      bu nedenle 5510 sayılı Kanunun 11 inci maddesi kapsamında işyeri bildirgesi
+      verilmediği anlaşılmıştır.
+
+  # ─── BLOK 4 ─────────────────────────────────────────────────────────────
+  # Koşullu ek bilgi. Alt işveren yoksa bu blok hiç basılmaz.
+  - ad: alt-isveren
+    kosul: alt işveren var
+    metin: |
+      İşyerinde {{alt_isveren_unvan}} unvanlı alt işverenin faaliyet gösterdiği,
+      alt işverenliğin {{alt_isveren_sicil_no}} sicil numarası ile tescil edildiği
+      görülmüştür.
+
+  # ─── BLOK 5 ─────────────────────────────────────────────────────────────
+  # Kapanış / değerlendirme cümlesi.
+  # `|yonelme`, `|ilgi` → Türkçe ek çekimi, ünlü uyumunu kod hallediyor.
+  - ad: degerlendirme
+    kosul: işyeri tescilli
+    metin: |
+      Bu itibarla; {{isyeri_unvan|ilgi}} 5510 sayılı Kanunun 12. maddesi uyarınca
+      işveren sıfatını haiz olduğu anlaşılmıştır.
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  YAZARKEN İŞİNE YARAYACAK REFERANS
+# ══════════════════════════════════════════════════════════════════════════
+#
+#  ── KULLANABİLECEĞİN KOŞULLAR ──
+#     her zaman
+#     işyeri tescilli            işyeri tescilsiz
+#     alt işveren var            alt işveren yok
+#     kazalı sayısı 1            kazalı birden fazla
+#     tanık var                  tanık yok
+#     olay ölümlü                olay yaralanmalı
+#     iş kazası                  meslek hastalığı
+#     <belge> var                <belge> yok
+#        belge adları: iş kazası bildirim formu · ünite kararı ·
+#        olay yeri inceleme raporu · ifade tutanağı · bilirkişi raporu ·
+#        savcılık yazısı · hizmet dökümü · işe giriş bildirgesi ·
+#        işten ayrılış bildirgesi · işyeri tescil
+#     işe giriş bildirgesi kaza tarihinden önce verilmiş / sonra verilmiş
+#     kaza bildirimi süresinde yapılmış / süresinde yapılmamış
+#     hizmet dökümünde kaza öncesi dönem verisi var / yok
+#
+#     Listede olmayan bir koşul lazımsa yine yaz — çıkarılabiliyorsa eklerim,
+#     çıkarılamıyorsa sana söylerim. Uydurma varsayımla doldurmam.
+#
+#  ── YER TUTUCULAR ──
+#     işyeri tescilinden:
+#        isyeri_unvan · isyeri_sicil_no · vergi_no · is_kolu_kodu ·
+#        tehlike_sinifi · mahiyet_kodu · prim_nispeti · isin_mahiyeti ·
+#        isyeri_adres · il · ilce · kanun_kapsamina_alinis · tescilin_turu ·
+#        ticaret_sicil_no · vergi_dairesi
+#     işe giriş / işten ayrılış bildirgesinden:
+#        sigortali · sigortali_tc · baba_adi · ana_adi · dogum_yeri ·
+#        dogum_tarihi · meslek · ise_baslama_tarihi · ayrilis_tarihi ·
+#        ayrilis_nedeni_kodu
+#     denetim gerekçesinden:
+#        dg_sayi · dg_tarih · dg_mudurluk · kaza_tarihi · olum_tarihi · olay_turu
+#     ünite kararından:
+#        uk_karar_no · uk_karar_tarihi · kaza_saati · olus_sekli · meslek_kodu
+#     görev emrinden:
+#        ge_sayi · ge_tarih · grup_baskanligi · mufettis
+#     hizmet dökümünden:
+#        {{tablo:prime_esas_kazanc}}  → 4 aylık tabloyu basar
+#
+#  ── EK ÇEKİMİ ──
+#     {{sigortali}}            ALİ VELİ
+#     {{sigortali|yonelme}}    ALİ VELİ'e        (-e / -a)
+#     {{sigortali|ilgi}}       ALİ VELİ'in       (-in / -ın / -un / -ün)
+#     {{sigortali|belirtme}}   ALİ VELİ'i
+#     {{sigortali|bulunma}}    ALİ VELİ'de
+#     {{sigortali|ayrilma}}    ALİ VELİ'den
+#
+#  ── EK ATIFLARI ──
+#     {{ek:isyeri_tescil}}  →  (Ek:7)
+#     Numarayı elle yazma; JETEK'te sıra değişirse atıf kendiliğinden kayar.
+#
+#  ── VERİ YOKSA ──
+#     Bir blok basılıyor ama içindeki tek bir alan boşsa:
+#        {{kanun_kapsamina_alinis|yoksa:"tespit edilemeyen"}}
+#     Ama tercih et: cümlenin tamamı anlamsızlaşıyorsa alan yedeği yerine
+#     ayrı bir blok yaz ve koşulla ayır. Okuması da bakımı da daha kolay.
