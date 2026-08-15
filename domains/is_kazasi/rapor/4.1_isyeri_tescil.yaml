@@ -35,6 +35,12 @@ bloklar:
       “{{tehlike_sinifi}}” sınıfta yer aldığı ve {{kanun_kapsamina_alinis}} tarihinde
       kanun kapsamına alındığı görülmüştür. {{ek:isyeri_tescil}}
 
+      {{sigortalı_tc_no}} T.C. Kimlik Numaralı {{sigortalı_ad_soyad|belirtme}},
+      {{sigortalı_ig_tarih}}-{{sigortalı_ia_tarih}} tarihleri arasında, 5510 sayılı
+      Kanunun 4. maddesinin 1. fıkrasının (a) bendine tabi olarak çalıştıran,
+      {{iş_yeri_unvan}} unvanlı işyerinin, 5510 sayılı Kanunun 12. maddesinde
+      belirtilen işveren sıfatını haiz olduğu açıktır.
+
   # ─── BLOK 3 ─────────────────────────────────────────────────────────────
   # BLOK 2'nin "olmadığında" hâli. İkisi birbirini dışlıyor,
   # her vakada tam olarak biri basılır.

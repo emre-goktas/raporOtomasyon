@@ -57,6 +57,7 @@ ikisi de gerçek veriyle doğrulandı. `tests/calistir.py` → 53 test geçiyor.
 | `core/cikarim/satir.py` | Satır içi `Etiket: Değer` (denetim gerekçesi, ünite kararı) — kurum yazışması düzeni |
 | `core/belge.py` | Belge türünü **içerikten** tanır, doğru motora yönlendirir |
 | `core/capraz.py` | Aynı bilgiyi kaynaklar arasında karşılaştırır (kural 6) |
+| `core/manifest.py` | JETEK `manifest.json` → `belgeler[].ek_no` + atıf haritası |
 | `cli.py` | `kur` + `cikar` komutları |
 
 **Faz 2 sonucu — Ali Veli dosyası (5 belge):**
@@ -91,9 +92,9 @@ yazılmayacak.
 | **2** | ~~3a belgeleri → alan çıkarımı~~ · UDF denetim gerekçesi **bekliyor** | ✗ |
 | 3 | İçerik bazlı belge sınıflandırma — *temeli `core/belge.py` ile atıldı* | ✗ |
 | 4 | Kural motoru: eksik belge → İPC, tarih mantığı, çapraz doğrulama | ✗ |
-| 5 | Taranmış 3b/3c belgeleri → özet + alan çıkarımı | ✓ |
-| 6 | Rapor render: docxtpl + Türkçe ek uyumu + `{{ek:...}}` çözümü | kısmen |
-| 7 | JETEK manifest bağlantısı — `ek_no` geri beslemesi | ✗ |
+| **6** | Rapor render — **önce deterministik bölümler** (Emre'nin kararı, 14.08.2026) | ✗ |
+| 5 | Taranmış 3b/3c belgeleri → soru bazlı çıkarım (Faz 6'dan sonra) | ✓ |
+| ~~7~~ | ~~JETEK manifest bağlantısı — `ek_no` geri beslemesi~~ (15.08.2026) | ✗ |
 
 Faz 1–4 AI'sız ve işin ~%70'i. **AI'ı erken çağırma.**
 
@@ -292,7 +293,57 @@ tuttu** (34/18/76/26/25/49). Ek eksikse burada yakalanır.
 **6. Ünite kararındaki `Mevcut ( X ) / Mevcut değil ( )` kutucukları** komisyonun
 elindeki belge listesi — Faz 4'ün "belge yoksa İPC" kuralının doğrudan girdisi.
 
-**7. Henüz çıkarılmayanlar** (bilerek, kapsam dışı):
+**8. Hizmet dökümünde belge türü aritmetiği: `Asıl + Ek − İptal`.**
+İptal "tamamen **veya kısmen**" geçersiz kılıyor — satırı silmiyor, tutarı
+düşürüyor. Dönem+işyeri bazında basit çıkarma:
+
+```
+2016/09   Ek 2.157,40 + Asıl 2.157,40 − İptal 2.157,40  = 2.157,40   (tam iptal)
+2000/01   Asıl 1.012.140.000 − İptal 42.450.000         = 969.690.000 (kısmi)
+```
+
+26 yılın **26'sı** belgenin kendi TOPLAM satırıyla tuttu; toplam gün 8.103 =
+belgedeki "Toplam 4a Uzun Vade PÖGS". Önce "İptal eşleştiği satırı komple siler"
+diye çift eşleştirme denendi, 25/26'da kaldı — doğrusu çıkarma.
+
+**9. Raporun 4.3 tablosu — spesifikasyon (Emre, 14.08.2026):**
+
+```
+kolonlar : Yıl/Ay · İşyeri Sicil No · SPEK Tut. (TL) · Çalışma Gün Sayısı
+pencere  : kaza ayı + geriye 3 ay  (kaza ayı DAHİL, 4 dönem)
+işyeri   : birden çok işyeri varsa hepsi — dönem sırasına göre iç içe,
+           iki işyeri = 8 satır
+eksik ay : `---`
+okuma    : hizmet dökümünün son sayfalarından, dönem alanı esas
+```
+
+Aynı tabloda `20.002,50` ve `666.75` yan yana geçiyor — TR ve ABD ondalık
+ayracı karışık; `core/metin.py:ondalik()` ikisini de çözüyor.
+
+**10. Vision ölçüldü (14.08.2026), üç savunma hattı da çalıştı.**
+Aynı taranmış sayfa iki yoldan denendi:
+
+| | süre | girdi jetonu | sonuç |
+|---|---|---|---|
+| `agy -p --json-schema` (ajan) | 170 s | 88.349 | 10/10 alan, alıntılı |
+| Gemini 3.5 Flash (tek çağrı) | 15 s | 1.293 | 10/11 alan, `soyad`'ı doğru şekilde `okunamayan`'a yazdı |
+
+Ajan yolu 15× pahalı ve 11× yavaş — motor olarak tek atışlık API çağrısı doğru.
+Gemini görüntüyü karo başına sayıyor (~1.290 jeton/sayfa), Claude piksel alanıyla
+(~5.100). `.env`'de **`GEMINI_API_KEY`** var, Anthropic anahtarı yok.
+
+**Kritik:** el yazısıyla yazılmış TC'yi Gemini **yanlış okudu** — tek hanede,
+8'i 3 sanarak (örnekle: `10000000078` yerine `10000000038`) — ve `okunamayan: []` yazdı, yani
+şüphe beyan etmedi. Yakalayan model değil, bizim katmanımız oldu: **TC sağlaması
+reddetti, çapraz doğrulama uyuşmuyor dedi.** Model güven skoru istememek doğru
+karardı — model tam güvenle yanılıyor.
+
+**11. Sınıf C için `alanlar:` soyutlaması YANLIŞ.** İfade tutanağının, bilirkişi
+raporunun sabit alan kümesi yok. Doğru şekil: **şema belgeden değil raporun
+sorularından gelir** — `domains/is_kazasi/yorum/kaza_olusu.yaml` gibi, "kaza nasıl
+oldu" sorusu 28 sayfaya sorulur, model nerede bulduysa oradan alıntılar.
+
+**12. Henüz çıkarılmayanlar** (bilerek, kapsam dışı):
 - Hizmet dökümünün 1. sayfasındaki üst yazı (TC, ad-soyad, doğum bilgileri,
   `Toplam 4a Uzun Vade PÖGS`) — aynı veriler bildirgeden zaten geliyor
 - Tescildeki ortak / yönetici blokları — `etiketli` motoru blok başlıklarını
@@ -390,10 +441,23 @@ Raporda numara değil **sabit anahtar** yazılır, render'da çözülür:
 
 ```
 şablonda:  {{ek:denetim-gerekcesi}} sayılı belgede...
-çıktıda:   Ek:2,2/1-7 sayılı belgede...
+çıktıda:   Ek:2 sayılı belgede...
 ```
 
 Araya belge girdiğinde hiçbir atıf elle düzeltilmez.
+
+**Çözüm iki anahtar kümesinden birleşir** (`core/manifest.py:ek_haritasi`):
+tanıdığımız belgenin `tur`'ü (`isyeri_tescil`) ve manifest'in `citation_key`'i
+(`ifade-tutanagi`). İkincisi olmadan yalnızca içerikten tanıyabildiğimiz
+belgelere atıf yapılabilirdi — oysa raporun atıf yaptıklarının çoğu (ifade,
+bilirkişi, olay yeri tutanağı) hiçbir zaman deterministik olarak tanınmayacak.
+
+Eşleme dosya adına bakar ama **dosya adına güvenmez** (kural 2 ihlali değil):
+desen tahmin edilmiyor, manifest hangi dosyanın hangi ek olduğunu açıkça
+yazıyor. İki yol var — JETEK ZIP'inden çıkmış ad (`07_tescil.pdf`) ve JETEK'in
+sakladığı ham kurum adı (`tescilBilgi_....pdf`) — ikincisi sayesinde belgeler
+JETEK'ten geçmeden önce de ek numarası biliniyor. Manifest'in beyan ettiği
+sayfa adedi ayrıca bedava bir doğrulama (kural 6).
 
 ### Türkçe ek uyumu
 
@@ -408,6 +472,54 @@ kategorisini tamamen kapatır:
 {{sigortali|ilgi}}     →  ALİ VELİ'in
 {{isveren|ilgi}}       →  ...LTD.ŞTİ.'nin
 ```
+
+---
+
+## Rapor render — bölüm YAML'ı
+
+Rapor sabit metin değil, **koşullu blokların listesi**. Belge eksik olduğunda blok
+hiç basılmaz; yer tutucu boşta kalmaz, cümle yarım kalmaz.
+
+Kalıp: `domains/is_kazasi/rapor/4.1_isyeri_tescil.yaml` (örnek dosya, Emre bunu
+çoğaltarak diğer bölümleri yazıyor).
+
+```yaml
+bolum: "4.1"
+baslik: "İşyerinin Tescil İşlemleri…"
+bloklar:
+  - ad: mevzuat
+    kosul: her zaman
+    metin: |
+      5510 sayılı Kanunun 12. maddesinde; "…" denilmiştir.
+  - ad: tescilli-isyeri          # ↰ ikisi birbirini dışlar,
+    kosul: işyeri tescilli       #   her vakada tam olarak biri basılır
+  - ad: tescilsiz-isyeri
+    kosul: işyeri tescilsiz
+```
+
+**Altın kural: her "eğer" için iki blok — biri olduğunda, biri olmadığında.**
+"Belge yok" bloğu aynı zamanda kural motorunun İPC koluna bağlanacak yer.
+
+Yer tutucular `{{alan}}`, ek çekimi `{{sigortali|yonelme}}` → `ALİ VELİ'e`,
+ek atfı `{{ek:isyeri_tescil}}` → `(Ek:7)`. Örnek dosyanın altında koşul listesi,
+alan listesi ve çekim biçimleri referans olarak duruyor.
+
+### Rapor iskeleti — 125 gerçek rapordan doğrulandı
+
+```
+4.1 İşyerinin Tescil İşlemleri…                63/125     4.8 İdari Para Cezaları     20  (isteğe bağlı)
+4.2 Kazalının ve Tanıkların Sigortalılık…      60         4.9 Diğer Mevzuat           17  (isteğe bağlı)
+4.3 Prime Esas Kazançlar…                      60         4.2.1 / 4.2.2 alt kırılım   13
+4.4 İş Kazası Yönünden                         60         3.1.1 / 3.1.2               9
+4.5 İşverenin Sorumluluğunun…                  56
+4.6 Kazalı Sigortalının Sorumluluğunun…        56
+4.7 Üçüncü Kişilerin Sorumluluğunun…           57
+5   SONUÇ VE KANAAT                            60
+```
+
+Mevzuat alıntıları **çoğunlukla sabit ama tek metin değil**: 4.1–4.7'de baskın
+varyant %54–84 arasında (4.3 %84, 4.7 %71, 4.2 %56). 4.8/4.9 gerçekten vakaya
+göre değişiyor (%25) — onlar mevzuat dosyası değil, **kural motoru çıktısı**.
 
 ---
 
@@ -447,12 +559,22 @@ sözleşmesi **manifest**.
 | Bildirimsel şablon konfigürasyonu | `backend/data/templates.json` | Kural 7'nin örneği |
 | İlk sayfadan AI sınıflandırma | `backend/services/ai_service.py` | Faz 3 sınıflandırma için desen |
 
-**JETEK'e eklenmesi gerekenler** (bu proje için):
-- `manifest.json` çıktısı — ZIP'in içine ve ayrı indirilebilir
-- Her belgede `source.original_filename` — **yeniden adlandırma sonrası izlenebilirlik**
-- Kümülatif `page_range` — `"Ek-7, s. 3-5"` atıfları için
-- `citation_key` — sabit anahtar, numara kayınca atıflar bozulmasın
-- Hiyerarşik alt numaralandırma — `Ek:2,2/1-7`
+**JETEK'e eklendi (15.08.2026)** — `06_JETEK` deposunda, henüz commit edilmedi:
+
+| Ne | Nerede |
+|---|---|
+| ZIP'e `manifest.json` yazılıyor | `document-builder.js:buildManifest` — ZIP dolarken toplanır, yani **arşivde gerçekten olanı** listeler; indirilemeyen dosya manifest'e de girmez |
+| `citation_key` — mahiyet'in ASCII slug'ı | aynı dosya, `slugifyTr`. Aynı ada sahip iki ek `-2` ekiyle ayrılır |
+| Kümülatif `sayfa_araligi` | aynı dosya, ek sırasına göre 1 tabanlı `[ilk, son]` |
+| `kaynak.dosya_adi` — hangi orijinal dosyadan kesildi | `pdf_service.extract_pages` kesim anında metadata'ya yazar (**tek an bu**: çıktı yeni uuid + yeni ad alıyor, bağlantı başka hiçbir yerde kalmıyor); `POST /source-names` sorar |
+
+Hiyerarşik alt numaralandırma (`Ek:2,2/1-7`) **yapılmadı** — Emre 14.08.2026'da
+kaldırdı: "artık buna ihtiyaç yok, `(Ek:8)` yeterli."
+
+`slugifyTr` Türkçe harfleri `toLowerCase()`'den **önce** katlıyor: JS'te de
+Python'da da `"İ".lower()` iki kod noktası ("i" + birleşen nokta) verir, sonra
+katlansa ASCII filtresi o noktayı yer ve doğru sonuç kazara çıkardı. Aynı tuzak
+`core/ek.py`'de bir kez, bu modülün testinde bir kez daha yakalandı.
 
 ---
 

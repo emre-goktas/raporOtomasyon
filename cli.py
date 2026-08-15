@@ -17,10 +17,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from core import belge as belge_mod
+from core import manifest as manifest_mod
 from core import capraz
 from core import case as case_mod
 from core import denetim_listesi, gorev_emri
 from core.cikarim import sema
+from core.rapor.render import render
 from core.xlsx import read_rows
 
 
@@ -121,6 +123,26 @@ def cikar(case_yolu: Path, girdi: Path | None) -> int:
             print(f"      ⚠ {u}")
         taninan += bool(b["tur"])
 
+    # JETEK manifest'i — ek numaraları. Yoksa sorun değil: belgeler yine
+    # çıkarılır, yalnızca rapordaki atıflar '‹Ek:?›' kalır.
+    manifest_uyarilar: list[str] = []
+    ekler: list[dict] = []
+    manifest_yolu = manifest_mod.bul(girdi, case_json.parent)
+    if manifest_yolu:
+        ekler, manifest_uyarilar = manifest_mod.oku(manifest_yolu)
+        u2, bilgiler = manifest_mod.bagla(belgeler, ekler)
+        manifest_uyarilar += u2
+        eslesen = sum(1 for b in belgeler if b.get("ek_no") is not None)
+        print(f"\n  manifest: {manifest_yolu.name} — {len(ekler)} ek, "
+              f"{eslesen}/{len(belgeler)} belge eşleşti")
+        for u in manifest_uyarilar:
+            print(f"      ⚠ {u}")
+        for b in bilgiler:
+            print(f"      · {b}")
+    else:
+        print(f"\n  manifest: yok — ek numaraları boş kalacak "
+              f"(JETEK ZIP'indeki {manifest_mod.DOSYA_ADI} bu klasöre konursa dolar)")
+
     capraz_uyarilar = capraz.dogrula(kayit, belgeler)
     print(f"\n  çapraz doğrulama: "
           f"{'uyumsuzluk yok' if not capraz_uyarilar else str(len(capraz_uyarilar)) + ' uyumsuzluk'}")
@@ -128,13 +150,62 @@ def cikar(case_yolu: Path, girdi: Path | None) -> int:
         print(f"      ⚠ {u}")
 
     kayit["belgeler"] = belgeler
+    # Tek gerçek kaynak case.json — 'rapor' komutu manifest dosyasını tekrar
+    # aramak zorunda kalmasın. Tanıyamadığımız belgelerin (ifade, bilirkişi)
+    # atıf anahtarları da yalnızca burada yaşıyor. Manifest ortadan kalktıysa
+    # liste de gider: elde olmayan bir manifest'ten kalma ek numarası, hiç
+    # numara olmamasından tehlikelidir — rapor yanlış eke atıf yapar ve bunu
+    # hiçbir şey fark etmez.
+    if manifest_yolu:
+        kayit["ekler"] = ekler
+    elif kayit.pop("ekler", None):
+        print("      ⚠ önceki çalıştırmadan kalan ek listesi silindi")
     # Katman kendi şüphesini yazar; her çalıştırmada baştan üretilir ki
     # düzeltilen bir uyarı listede asılı kalmasın.
-    kayit["uyarilar"] = [u for u in kayit.get("uyarilar", []) if not u.startswith("çapraz:")]
-    kayit["uyarilar"] += capraz_uyarilar
+    kayit["uyarilar"] = [u for u in kayit.get("uyarilar", [])
+                         if not u.startswith(("çapraz:", "manifest:"))]
+    kayit["uyarilar"] += capraz_uyarilar + [u for u in manifest_uyarilar if u.startswith("manifest:")]
     case_json.write_text(json.dumps(kayit, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"\n{taninan}/{len(belgeler)} belge tanındı -> {case_json}")
+    return 0
+
+
+def rapor(case_yolu: Path, bolum: str | None) -> int:
+    import yaml
+
+    case_json = case_yolu / "case.json" if case_yolu.is_dir() else case_yolu
+    if not case_json.exists():
+        sys.exit(f"HATA: {case_json} yok — önce 'kur' ve 'cikar' çalıştır")
+    kayit = case_mod.yukle(case_json)
+    if not kayit.get("belgeler"):
+        sys.exit("HATA: case.json'da belge yok — önce 'cikar' çalıştır")
+
+    dizin = Path(__file__).parent / "domains" / kayit["domain"] / "rapor"
+    dosyalar = sorted(d for d in dizin.glob("*.yaml") if not d.name.startswith("_"))
+    if bolum:
+        dosyalar = [d for d in dosyalar if d.name.startswith(bolum)]
+    if not dosyalar:
+        sys.exit(f"HATA: {dizin} altında bölüm tanımı yok")
+
+    ekler = manifest_mod.ek_haritasi(kayit["belgeler"], kayit.get("ekler"))
+    toplam_uyari = 0
+    for d in dosyalar:
+        tanim = yaml.safe_load(d.read_text(encoding="utf-8"))
+        s = render(tanim, kayit, kayit["belgeler"], ekler=ekler)
+        print(f"\n{'=' * 78}\n{tanim['bolum']}. {tanim['baslik']}\n{'=' * 78}\n")
+        print(s.metin)
+        if s.doldurulacaklar:
+            print(f"\n  ── DOLDURULACAK ({len(s.doldurulacaklar)}) ──")
+            for g in s.doldurulacaklar:
+                print(f"     · [{g['blok']}] {g.get('soru', g['ad'])}")
+        if s.atlanan_bloklar:
+            print(f"\n  basılmayan blok: {', '.join(s.atlanan_bloklar)}")
+        for u in s.uyarilar:
+            print(f"  ⚠ {u}")
+        toplam_uyari += len(s.uyarilar)
+
+    print(f"\n{len(dosyalar)} bölüm basıldı, {toplam_uyari} uyarı")
     return 0
 
 
@@ -150,7 +221,13 @@ def main():
     c.add_argument("--girdi", type=Path, default=None,
                    help="belge klasörü (varsayılan: <case>/belgeler)")
 
+    r = alt.add_parser("rapor", help="case.json'dan rapor bölümlerini bas")
+    r.add_argument("--case", type=Path, required=True)
+    r.add_argument("--bolum", default=None, help="yalnız bu bölüm (ör. 4.1)")
+
     a = ap.parse_args()
+    if a.komut == "rapor":
+        sys.exit(rapor(a.case, a.bolum))
     if a.komut == "kur":
         sys.exit(kur(a.girdi, a.cases))
     if a.komut == "cikar":

@@ -4,10 +4,10 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import test_capraz, test_cikarim, test_metin, test_onarim, test_satir  # noqa: E402
+import test_capraz, test_cikarim, test_manifest, test_metin, test_onarim, test_rapor, test_satir  # noqa: E402
 
 gecen = kalan = 0
-for modul in (test_onarim, test_metin, test_capraz, test_cikarim, test_satir):
+for modul in (test_onarim, test_metin, test_capraz, test_cikarim, test_satir, test_manifest, test_rapor):
     s = modul.calistir()
     gecen += s.gecen
     kalan += s.kalan

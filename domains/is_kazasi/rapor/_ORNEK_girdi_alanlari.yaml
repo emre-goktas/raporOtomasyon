@@ -1,0 +1,90 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  MÜFETTİŞ DEĞERLENDİRMESİ GEREKEN BÖLÜMLER — kalıp dosyası
+#
+#  Bazı yerlerde metin veriden türetilemez; müfettişin takdiri gerekir.
+#  Tescilsiz işyeri değerlendirmesi bunun tipik örneği: emir-talimat,
+#  bağımlılık, ücret ödeme, malzeme temini unsurları olaya göre değişir.
+#
+#  ÇÖZÜM: bloğu ÜÇE böl.
+#     1) girdi   → müfettişin yazacağı serbest metin (Word'de boşluk olarak çıkar)
+#     2) seçim   → müfettişin seçeceği değer (mahiyet kodu gibi)
+#     3) metin   → kalıp; girdi ve seçimleri yerine koyar
+#
+#  Böylece takdir sende kalır, kalıp tekrarı bende. Rapor asla uydurma
+#  bir değerlendirme yazmaz — boşluğu işaretler, sen doldurursun.
+# ══════════════════════════════════════════════════════════════════════════
+
+bolum: "4.1"
+baslik: "İşyerinin Tescil İşlemleri ve İşverenlik Niteliğinin Değerlendirilmesi"
+
+bloklar:
+
+  # ─── 1) SERBEST DEĞERLENDİRME ───────────────────────────────────────────
+  # `girdi:` olan blok, render sırasında Word çıktısında şöyle görünür:
+  #     [[DOLDURULACAK — işverenlik unsurlarının değerlendirilmesi]]
+  # ve "doldurulacaklar" listesine düşer. Sen Word'de yerine yazarsın.
+  - ad: tescilsiz-degerlendirme
+    kosul: işyeri tescilsiz
+    girdi:
+      - ad: isverenlik_degerlendirmesi
+        soru: "İşverenlik unsurları nasıl değerlendirildi?"
+        tip: uzun_metin
+        hatirlatma: |
+          · İşin konusu ne, kim kimden almış, kime vermiş?
+          · Birden çok kişi birlikte mi almış (adi ortaklık)?
+          · Emir ve talimat kimden geliyor — bağımlılık unsuru var mı?
+          · Ücreti kim ödemiş?
+          · İşteki malzemeyi kim temin etmiş?
+    metin: |
+      {{isverenlik_degerlendirmesi}}
+
+  # ─── 2) SONUÇ — kalıp, sadece iki girdi alıyor ──────────────────────────
+  # Burada tek değişken "tespit edilen işveren". Tescilli vakada bu bilgi
+  # tescilden gelir; TESCİLSİZ vakada senin tespitindir, o yüzden girdi.
+  - ad: tescilsiz-sonuc
+    kosul: işyeri tescilsiz
+    girdi:
+      - ad: tespit_edilen_isveren
+        soru: "Değerlendirme sonucu işveren sıfatını haiz olan kişi/kuruluş"
+        tip: metin
+      - ad: mahiyet_kodu
+        soru: "Re'sen tescilde kullanılacak mahiyet kodu"
+        tip: secim
+        secenekler: [1, 2, 3, 4]
+    metin: |
+      Dolayısıyla {{tespit_edilen_isveren}} işverendir. Hal böyleyken Kurum
+      kayıtlarından yapılan sorgulamalarda {{tespit_edilen_isveren|ilgi}} adına
+      tescil edilmiş bir işyeri bulunmadığı saptanmıştır.
+
+      {{calisma_donemi}} {{sigortali|belirtme}} hizmet akdine tabi olarak
+      çalıştırdığı tespit edilen {{tespit_edilen_isveren}} adına {{mahiyet_kodu}}
+      mahiyet kodunda re'sen işyeri tescil edilmesi gerektiği değerlendirilmiştir.
+
+    # Bu blok basıldığında 4.8'e otomatik bir İPC kaydı düşer.
+    # 4.8 bölümü bunları toplayıp yazar; sen aynı şeyi iki yerde yazmazsın.
+    ipc:
+      - madde: "5510/102-b"
+        gerekce: "İşyeri bildirgesinin yasal süresinde verilmemesi"
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  TÜRETİLMİŞ ALANLAR — kod hesaplıyor, sen yazmıyorsun
+# ══════════════════════════════════════════════════════════════════════════
+#
+#  {{calisma_donemi}}
+#     giriş ve çıkış tarihi farklıysa  →  "01/03/2024-15/06/2024 tarihleri arasında"
+#     tek gün ise                      →  "01/03/2024 tarihinde"
+#     Sen hangi hâl olduğunu düşünmüyorsun, cümleye tek yer tutucu koyuyorsun.
+#
+#  {{sigortali|belirtme}}  →  ALİ VELİ'yi      ← kesme işareti + ek otomatik
+#  {{sigortali|ilgi}}      →  ALİ VELİ'nin
+#  {{isyeri_unvan|ilgi}}   →  ÖRNEK LTD.ŞTİ.'nin
+#     Ek çekimi için AYRI bir yer tutucu koyma; `|çekim` yeter.
+#
+#
+#  ── AI BURAYA NE ZAMAN GİRER ──
+#  Şimdi değil. İleride (Faz 5) `girdi:` alanları için AI **taslak** üretebilir:
+#  ifadeleri, sözleşmeleri, olay yeri tutanağını okuyup "bağımlılık unsuruna
+#  dair şu beyanlar var (Ek:5, s.3)" diye alıntılı bir taslak çıkarır.
+#  Sen düzeltip onaylarsın. AI'ın yazdığı metin ASLA doğrudan rapora girmez —
+#  bu bölüm idari para cezasına ve kusur takdirine bağlanıyor.

@@ -1,0 +1,139 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  ÇOK İŞVERENLİ / ALT İŞVERENLİ 4.1 — döngü kalıbı
+#
+#  "Bazen 3-4 işveren dosyası inceleniyor, o yüzden stabil değil" sorusunun
+#  cevabı: metin stabil, DEĞİŞEN ŞEY TEKRAR SAYISI.
+#
+#  Bir işveren varsa kurum kaydı paragrafı 1 kez, dört işveren varsa 4 kez
+#  basılır — cümle kalıbı hep aynı. Bunu `her:` ile çözüyoruz, blok metnini
+#  dört kez yazmıyorsun.
+# ══════════════════════════════════════════════════════════════════════════
+
+bolum: "4.1"
+baslik: "İşyerinin Tescil İşlemleri ve İşverenlik Niteliğinin Değerlendirilmesi"
+
+bloklar:
+
+  # ─── A) SÖZLEŞME ZİNCİRİ ────────────────────────────────────────────────
+  # Ruhsat / müteahhitlik / taşeron sözleşmeleri. Kaynak 3c belgeleri (tarama),
+  # şimdilik GİRDİ — ama tabloya satır ekleyerek, serbest metin olarak değil.
+  # Böylece ileride vision okuduğunda aynı yapıya oturur.
+  - ad: sozlesme-zinciri
+    kosul: sözleşme zinciri var
+    her: sozlesmeler
+    girdi:
+      - ad: sozlesmeler
+        soru: "İş alma zinciri — her halka için bir satır"
+        tip: tablo
+        kolonlar: [veren, alan, belge_turu, belge_tarihi, belge_no, isin_konusu, ek]
+        hatirlatma: |
+          Örnek satır:
+            veren        : Batman Organize Sanayi Bölgesi
+            alan         : <yapı sahibi ünvanı>
+            belge_turu   : yapı ruhsatı
+            belge_tarihi : 22/07/2022
+            belge_no     : 16/556
+            isin_konusu  : fabrika binası inşaatı
+    metin: |
+      {{veren}} tarafından {{alan|yonelme}} verilmiş {{belge_tarihi}} tarihli
+      {{belge_no}} numaralı {{belge_turu}} bulunduğu, işin konusunun
+      {{isin_konusu}} olduğu anlaşılmıştır. {{ek}}
+
+  # ─── B) KURUM KAYDI SORGUSU ─────────────────────────────────────────────
+  # BU BLOK TAMAMEN OTOMATİK. Veriler işyeri tescil belgesinden geliyor,
+  # zaten çıkarıyoruz. Kaç işyeri varsa o kadar paragraf basılır.
+  - ad: kurum-kaydi
+    kosul: her zaman
+    her: isyerleri
+    metin: |
+      {{unvan}} unvanlı işyerinin işyeri sicil numarasının {{sicil_no}} olduğu,
+      işin mahiyetinin {{isin_mahiyeti}} olduğu, {{kanun_kapsamina_alinis}}
+      tarihinde kanun kapsamına alındığı, işkolu kodunun {{is_kolu_kodu}} olduğu,
+      "{{tehlike_sinifi}}" sınıfta yer aldığı ve adresinin "{{adres}}" olduğu
+      görülmüştür. {{ek:tescil}}
+
+  # Alt işveren varsa aynı paragrafa eklenen cümle
+  - ad: kurum-kaydi-alt-isveren
+    kosul: alt işveren var
+    her: alt_isverenler
+    metin: |
+      {{sira_no}} nolu alt işvereninin {{unvan}} olduğu ve faaliyet döneminin
+      {{faaliyet_baslangic}}-{{faaliyet_bitis}} olduğu görülmüştür. {{ek:tescil}}
+
+  # ─── C) HANGİ İŞYERİ ────────────────────────────────────────────────────
+  # Kazanın hangi işyerinde olduğu MÜFETTİŞ TESPİTİ. Ama bildirgeyle çelişki
+  # varsa onu kural motoru kendiliğinden yakalar ve uyarır (aşağıya bak).
+  - ad: kaza-isyeri-tespiti
+    kosul: her zaman
+    girdi:
+      - ad: kaza_isyeri_sicil
+        soru: "Kazanın meydana geldiği işyerinin sicil numarası"
+        tip: secim_isyerlerinden
+    metin: |
+      Mucip eki belgelerden mezkur kazanın {{kaza_yeri}} meydana geldiği,
+      dolayısıyla {{sigortali|ilgi}} işyerinin {{kaza_isyeri_sicil}} sicil
+      numaralı işyeri olduğu tespit edilmiştir.
+
+  # Bildirgedeki işyeri ile kaza işyeri farklıysa OTOMATİK basılır.
+  # Bu bir çapraz doğrulama bulgusu — sen tespit etmiyorsun, kural yakalıyor.
+  - ad: bildirge-celiskisi
+    kosul: bildirgedeki işyeri kaza işyerinden farklı
+    metin: |
+      Ancak müteveffa adına verilen {{ig_tarih}} tarihli işe giriş bildirgesinde
+      işyeri {{ig_isyeri_sicil}} sicil numaralı {{ig_isyeri_unvan}} unvanlı
+      işyeri olarak belirtilmiştir. {{ek:ise_giris_bildirgesi}}
+    girdi:
+      - ad: celiskinin_izahi
+        soru: "İki işyeri arasındaki ilişki nasıl açıklanıyor?"
+        tip: uzun_metin
+        hatirlatma: |
+          Aynı vergi numarası / aynı yönetici ortak mı?
+          Aracının kendi devamlı mahiyetteki işyeri mi?
+
+  # ─── D) TARİH ÇELİŞKİSİ ─────────────────────────────────────────────────
+  # Fiili çalışma başlangıcı < işyerinin kanun kapsamına alınış tarihi ise
+  # kural motoru yakalar, düzeltme cümlesini basar, İPC kaydını açar.
+  - ad: tescil-tarihi-duzeltmesi
+    kosul: fiili çalışma işyeri tescilinden önce başlamış
+    metin: |
+      Müteveffanın fiilen {{ise_baslama_tarihi}} tarihinde çalışmaya başladığı
+      ancak işyerinin {{kanun_kapsamina_alinis}} tarihinde kanun kapsamına
+      alındığı tespit edilmiştir. Bu minvalde {{kaza_isyeri_sicil}} sicil sayılı
+      işyerinin tescil tarihinin {{ise_baslama_tarihi}} tarihine çekilmesi
+      gerektiği değerlendirilmiştir.
+
+  # ─── E) MEVZUAT ─────────────────────────────────────────────────────────
+  - ad: mevzuat-12-1
+    kosul: her zaman
+    metin: |
+      5510 sayılı Kanunun 12. maddesinin 1. fıkrasında; "4. maddenin 1.
+      fıkrasının (a) ve (c) bentlerine göre sigortalı sayılan kişileri çalıştıran
+      gerçek veya tüzel kişiler ile tüzel kişiliği olmayan kurum ve kuruluşlar
+      işverendir." denilmiştir.
+
+  # Alt işveren VARSA 6. fıkra da eklenir — yoksa hiç basılmaz.
+  - ad: mevzuat-12-6
+    kosul: alt işveren var
+    metin: |
+      Aynı maddenin 6. fıkrasında; "Bir işverenden, işyerinde yürüttüğü mal veya
+      hizmet üretimine ilişkin bir işte veya bir işin bölüm veya eklentilerinde,
+      iş alan ve bu iş için görevlendirdiği sigortalıları çalıştıran üçüncü
+      kişiye alt işveren denir…" denilmiştir.
+
+  # ─── F) SONUÇ ───────────────────────────────────────────────────────────
+  - ad: sonuc-alt-isverenli
+    kosul: alt işveren var
+    metin: |
+      Sonuç olarak {{sigortali_tc}} T.C. Kimlik Numaralı {{sigortali|belirtme}}
+      {{calisma_donemi}} hizmet akdine tabi olarak çalıştırdığı tespit edilen,
+      {{asil_isveren_sicil}} sicil numaralı {{asil_isveren_unvan|ilgi}} asıl
+      işveren ve {{alt_isveren_unvan|ilgi}} alt işveren sıfatını haiz olduğu
+      değerlendirilmiştir.
+
+  - ad: sonuc-tek-isveren
+    kosul: alt işveren yok
+    metin: |
+      Sonuç olarak {{sigortali_tc}} T.C. Kimlik Numaralı {{sigortali|belirtme}}
+      {{calisma_donemi}} hizmet akdine tabi olarak çalıştırdığı tespit edilen
+      {{isyeri_unvan|ilgi}} 5510 sayılı Kanunun 12. maddesinde belirtilen
+      işveren sıfatını haiz olduğu değerlendirilmiştir.
